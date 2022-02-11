@@ -1,0 +1,45 @@
+name: Pipeline
+
+on: push
+
+jobs:
+  black-lint:
+    name: black
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: piotrpawlaczek/python-blacken@release/stable
+        with:
+          path: '.'
+          sanity-check: 'safe'
+          only-check: 'yes'
+
+  flake8-lint:
+    name: flake8
+    needs: black-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v2
+      - name: Set up Python environment
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.8"
+      - name: flake8 Lint
+        uses: py-actions/flake8@v2
+
+  deploy_lambda:
+    runs-on: ubuntu-latest
+    needs: flake8-lint
+    steps:
+      - uses: actions/checkout@v2
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+      - name: deploy
+        run: |
+          zip -j deploy.zip ./*
+          aws lambda update-function-code --function-name=${{ github.event.repository.name }} --zip-file fileb://deploy.zip 
