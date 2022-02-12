@@ -5,6 +5,7 @@ from botocore.exceptions import ClientError
 import uuid
 
 AWS_BUCKET = "csvaas"
+FILE_ERROR = "CSV-Datei konnte nicht erzeugt werden"
 
 
 def convertJSONToCSV(json_str):
@@ -48,6 +49,14 @@ def convertJSONToCSV(json_str):
 
 def lambda_handler(event, context):
     file = convertJSONToCSV(event["JSON"])
+
+    if file is False:
+        return {
+            "headers": {"Content-Type": "text/plain"},
+            "statusCode": 400,
+            "body": FILE_ERROR,
+            "isBase64Encoded": False,
+        }
 
     return {
         "headers": {"Content-Type": "text/csv"},
