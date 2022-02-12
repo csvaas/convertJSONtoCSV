@@ -49,7 +49,6 @@ def convertJSONToCSV(json_str):
 
 def lambda_handler(event, context):
     file = convertJSONToCSV(event["JSON"])
-    file = False
 
     if file is False:
         return {
